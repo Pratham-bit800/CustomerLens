@@ -1,27 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
-  Filter,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   Eye,
   X,
   User,
-  DollarSign,
-  ShoppingCart,
-  Calendar,
-  Clock,
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';
 import SegmentBadge from '../components/common/SegmentBadge';
 import LoadingSpinner, { SkeletonRow } from '../components/common/LoadingSpinner';
 import ErrorAlert, { EmptyState } from '../components/common/ErrorAlert';
-import { formatCurrency, formatNumber } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 import { SEGMENTS, FEATURE_LABELS } from '../utils/constants';
 
 export default function CustomerExplorer() {

@@ -8,7 +8,6 @@ import {
   Calendar,
   Clock,
   ArrowRight,
-  TrendingUp,
   Sparkles,
   Info,
 } from 'lucide-react';

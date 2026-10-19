@@ -4,10 +4,6 @@ import {
   AlertTriangle,
   Info,
   CheckCircle,
-  HelpCircle,
-  TrendingUp,
-  TrendingDown,
-  ArrowRight,
   RotateCcw,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
@@ -15,8 +11,8 @@ import Card from '../components/common/Card';
 import SegmentBadge from '../components/common/SegmentBadge';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorAlert from '../components/common/ErrorAlert';
-import { formatCurrency, formatDelta } from '../utils/formatters';
-import { PRESET_PROFILES, FEATURE_LABELS, SEGMENTS } from '../utils/constants';
+import { formatDelta } from '../utils/formatters';
+import { PRESET_PROFILES } from '../utils/constants';
 
 const INITIAL_FORM = {
   year_birth: 1975,

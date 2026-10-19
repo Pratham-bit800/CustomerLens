@@ -8,7 +8,6 @@ import {
   Lightbulb,
   Cpu,
   X,
-  Database,
   Radio,
 } from 'lucide-react';
 

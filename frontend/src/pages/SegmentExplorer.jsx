@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Layers,
   Filter,
-  BarChart3,
   TrendingUp,
   TrendingDown,
-  Info,
-  Compass,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';
@@ -15,7 +11,7 @@ import PCAScatterPlot from '../components/charts/PCAScatterPlot';
 import FeatureComparisonChart from '../components/charts/FeatureComparisonChart';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorAlert from '../components/common/ErrorAlert';
-import { formatCurrency, formatNumber, formatPercent } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 import { SEGMENTS } from '../utils/constants';
 
 export default function SegmentExplorer() {
@@ -61,12 +57,6 @@ export default function SegmentExplorer() {
   }
 
   const { clusters, pca_points } = data;
-
-  // Active cluster card details
-  const activeClusterObj =
-    selectedCluster !== ''
-      ? clusters.find((c) => c.cluster_id === Number(selectedCluster))
-      : null;
 
   const comparisonMetricsList = [
     { key: 'Income', label: 'Annual Income ($)' },

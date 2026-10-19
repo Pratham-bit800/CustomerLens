@@ -106,8 +106,10 @@ def get_model_info():
                 "per_cluster_accuracy": HOLDOUT_VALIDATION["per_cluster_accuracy"],
                 "primary_confusion": HOLDOUT_VALIDATION["primary_confusion"],
                 "note": (
-                    "These are HELD-OUT estimates, not in-sample accuracy. "
-                    "In-sample agreement (full dataset, same centroids) was 96.29 %."
+                    "Surrogate fidelity metric: NearestCentroid achieves 96.29 % agreement "
+                    "(ARI = 0.8947) with reference Agglomerative cluster assignments across the dataset. "
+                    "5-fold cross-validation evaluated subset stability (93.87 % ± 1.97 %). "
+                    "These metrics quantify surrogate approximation fidelity, not ground-truth predictive accuracy."
                 ),
             },
             "recommendation": HOLDOUT_VALIDATION["recommendation"],

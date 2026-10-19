@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   Lightbulb,
-  TrendingUp,
   Target,
-  ShieldAlert,
-  Compass,
   CheckCircle2,
-  HelpCircle,
-  Users,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';
 import SegmentBadge from '../components/common/SegmentBadge';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorAlert from '../components/common/ErrorAlert';
-import { formatCurrency, formatPercent } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 import { SEGMENTS } from '../utils/constants';
 
 export default function BusinessInsights() {

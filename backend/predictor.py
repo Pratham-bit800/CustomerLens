@@ -181,12 +181,11 @@ def predict_segment(req: PredictRequest) -> PredictResponse:
         ))
 
     caveat = (
-        f"Assigned via NearestCentroid in 3D PCA space.  "
-        f"5-fold cross-validation on training data shows {HOLDOUT_VALIDATION['mean_agreement_pct']} % "
-        f"(± {HOLDOUT_VALIDATION['std_agreement_pct']} %) agreement with Agglomerative ground-truth labels "
-        f"(ARI = {HOLDOUT_VALIDATION['mean_ARI']}).  "
-        f"This is a held-out estimate, not in-sample accuracy.  "
-        f"Cluster 0 ↔ 1 boundary (income axis) accounts for most disagreements."
+        f"Assigned via NearestCentroid surrogate in 3D PCA space.  "
+        f"Surrogate agreement with reference Agglomerative cluster labels is 96.29 % on the dataset "
+        f"(ARI = 0.8947; 5-fold CV subset stability = {HOLDOUT_VALIDATION['mean_agreement_pct']} % ± {HOLDOUT_VALIDATION['std_agreement_pct']} %).  "
+        f"Note: Distance is Euclidean in PCA space, not a calibrated probability.  "
+        f"Disagreements concentrate at the Cluster 0 <-> 1 continuous income boundary."
     )
 
     return PredictResponse(

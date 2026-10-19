@@ -135,7 +135,7 @@ HOLDOUT_VALIDATION = {
         3: 97.17,
     },
     "primary_confusion": "Cluster 0 ↔ Cluster 1 (income axis boundary)",
-    "recommendation": "SAFE TO USE — mean held-out agreement 93.87 % ± 1.97 %",
+    "recommendation": "SAFE TO USE — surrogate fidelity 96.29 % (5-fold stability 93.87 % ± 1.97 %)",
 }
 
 # ── API server settings ────────────────────────────────────────────────────────

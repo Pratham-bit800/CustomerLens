@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Cpu,
   Layers,
-  GitBranch,
-  ShieldAlert,
   CheckCircle,
   HelpCircle,
   AlertCircle,
-  Database,
-  Sliders,
   BarChart2,
+  Info,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';

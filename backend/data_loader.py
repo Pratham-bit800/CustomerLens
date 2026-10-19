@@ -194,13 +194,24 @@ def load_all_data() -> None:
             f"features_df has {len(features_df)}.  Row alignment is broken."
         )
 
-    # Verify Income column matches to confirm row ordering is intact
-    income_match = (raw_df["Income"].round(2) == features_df["Income"].round(2)).all()
-    if not income_match:
+    # Multi-feature row alignment verification:
+    # Verify that raw reconstructed features align 100% row-for-row with processed_features.csv
+    align_features = [
+        "Income", "Recency", "NumDealsPurchases", "NumWebPurchases",
+        "NumCatalogPurchases", "NumStorePurchases", "NumWebVisitsMonth",
+        "Complain", "Response", "Age", "Customer_Tenure_Days",
+        "Total_Spending", "Total_Children"
+    ]
+    mismatched_cols = [
+        c for c in align_features
+        if not (raw_df[c].round(2) == features_df[c].round(2)).all()
+    ]
+    if mismatched_cols:
         raise RuntimeError(
-            "Income column mismatch between raw_df and features_df.  "
-            "Row ordering may be incorrect."
+            f"Row alignment mismatch detected between raw_df and features_df on columns: {mismatched_cols}. "
+            f"Row ordering is broken."
         )
+    log.info("Full multi-feature row alignment verified: all 13 columns match 100%% across all 2,236 rows.")
 
     # Attach cluster labels and processed feature columns to raw data
     master_df = raw_df.copy()
