@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
-  Legend,
 } from 'recharts';
 import { SEGMENTS } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';

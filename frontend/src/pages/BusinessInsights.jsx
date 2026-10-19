@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';
-import SegmentBadge from '../components/common/SegmentBadge';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorAlert from '../components/common/ErrorAlert';
 import { formatCurrency } from '../utils/formatters';

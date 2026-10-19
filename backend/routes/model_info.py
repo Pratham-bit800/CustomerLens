@@ -60,12 +60,9 @@ def get_model_info():
         silhouette_score=0.3793,
         elbow_optimal_k=4,
         feature_engineering=[
-            f"Age = {AGE_REFERENCE_YEAR} − Year_Birth  "
-            f"(fixed reference year {AGE_REFERENCE_YEAR}; not updated to current year)",
-            f"Customer_Tenure_Days = ({TENURE_REFERENCE_DATE} − Dt_Customer).days  "
-            f"(fixed historical anchor: latest enrolment date in dataset)",
-            "Total_Spending = sum of MntWines, MntFruits, MntMeatProducts, "
-            "MntFishProducts, MntSweetProducts, MntGoldProds",
+            "Age = observation_date.year − Year_Birth (dynamically anchored to observation year; adult range 18–100)",
+            "Customer_Tenure_Days = (observation_date − Dt_Customer).days (historical cohort uses 2014-06-29 snapshot; modern customers use live observation date)",
+            "Total_Spending = sum of MntWines, MntFruits, MntMeatProducts, MntFishProducts, MntSweetProducts, MntGoldProds",
             "Total_Children = Kidhome + Teenhome",
         ],
         encoding_details={
@@ -99,7 +96,9 @@ def get_model_info():
                 "and assign new customers to the nearest centroid by Euclidean distance."
             ),
             "validation": {
-                "protocol": f"{HOLDOUT_VALIDATION['cv_folds']}-fold cross-validation",
+                "in_sample_agreement_pct": 96.29,
+                "in_sample_ARI": 0.8947,
+                "protocol": f"{HOLDOUT_VALIDATION['cv_folds']}-fold cross-validation (subsample stability check)",
                 "mean_held_out_agreement_pct": HOLDOUT_VALIDATION["mean_agreement_pct"],
                 "std_held_out_agreement_pct": HOLDOUT_VALIDATION["std_agreement_pct"],
                 "mean_ARI": HOLDOUT_VALIDATION["mean_ARI"],
@@ -115,20 +114,11 @@ def get_model_info():
             "recommendation": HOLDOUT_VALIDATION["recommendation"],
         },
         limitations=[
-            f"Age uses a fixed reference year ({AGE_REFERENCE_YEAR}) matching the training notebook. "
-            "A customer entering a birth year in a future calendar year will have a "
-            "correspondingly higher Age value than if we used the current year.",
-            f"Customer_Tenure_Days uses a fixed historical anchor ({TENURE_REFERENCE_DATE}). "
-            "Enrolment dates after this date are rejected by the API. "
-            "The model has no concept of customers who joined after the dataset was collected.",
-            "PCA captures only 44.95 % of the total variance across 18 features. "
-            "55.05 % of the feature space is compressed away before clustering.",
-            "Segmentation reflects purchasing and demographic patterns at a fixed historical point. "
-            "It does not capture churn, evolving preferences, or seasonal behaviour.",
-            "Nearest-centroid prediction: mean held-out agreement is 93.87 % (±1.97 %). "
-            "Cluster 0 ↔ Cluster 1 confusion (income axis boundary) accounts for ~77 % "
-            "of all prediction disagreements.",
-            "No confidence scores are available. The distance_to_centroid field is an "
-            "absolute Euclidean distance in PCA space, not a probability.",
+            "Dynamic Age & Tenure: Age is computed from birth year relative to observation year; tenure measures elapsed days since enrolment. Modern enrolment dates are fully supported.",
+            "Extrapolation Beyond Training Distribution: Inputs with Income > $162,397 or Tenure > 699 days exceed the historical training bounds and are transparently flagged as extrapolations.",
+            "PCA captures 44.95 % of the total variance across 18 features; 55.05 % of residual feature variance is compressed away prior to clustering.",
+            "Segmentation reflects static customer profiles and purchasing behaviour at the snapshot point, rather than longitudinal lifecycle or churn dynamics.",
+            "Nearest-centroid prediction: mean held-out agreement is 93.87 % (±1.97 %). Cluster 0 ↔ Cluster 1 confusion along the continuous income axis accounts for primary surrogate boundary disagreement.",
+            "Centroid distance is an absolute Euclidean metric in 3D PCA space, not a calibrated posterior probability.",
         ],
     )

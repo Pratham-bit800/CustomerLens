@@ -149,8 +149,7 @@ class PredictRequest(BaseModel):
     # ── Demographics ──────────────────────────────────────────────────────────
     year_birth: int = Field(
         ...,
-        ge=1940, le=2008,
-        description="Year of birth. Training range: 1940–2008 (Age 18–86 at reference year 2026).",
+        description="Customer year of birth. Must reflect an adult customer (18–100 years old).",
     )
     education: str = Field(
         ...,
@@ -162,8 +161,8 @@ class PredictRequest(BaseModel):
     )
     income: float = Field(
         ...,
-        gt=0, lt=600_000,
-        description="Annual household income in USD. Must be < $600,000 (training outlier threshold).",
+        gt=0, le=10_000_000,
+        description="Annual household income in USD. Must be positive (inputs > $162,397 are outside historical training distribution and will be flagged).",
     )
     kidhome: int = Field(
         ...,
@@ -181,9 +180,7 @@ class PredictRequest(BaseModel):
         ...,
         description=(
             "Customer enrolment date in YYYY-MM-DD or DD-MM-YYYY format.  "
-            "Must be on or before 2014-06-29 (the historical reference date used "
-            "during training).  Dates after this will produce negative tenure values "
-            "and are rejected."
+            "Must be on or before the current observation date."
         ),
     )
 
@@ -210,6 +207,21 @@ class PredictRequest(BaseModel):
     complain: int = Field(..., ge=0, le=1, description="1 if customer complained in past 2 years.")
     response: int = Field(..., ge=0, le=1, description="1 if customer accepted the last campaign.")
 
+    @field_validator("year_birth")
+    @classmethod
+    def validate_year_birth(cls, v: int) -> int:
+        current_year = pd.Timestamp.now().year
+        age = current_year - v
+        if age < 18:
+            raise ValueError(
+                f"Customer must be at least 18 years of age (year_birth {v} implies age {age} in {current_year})."
+            )
+        if age > 100:
+            raise ValueError(
+                f"Customer year_birth {v} implies age {age} in {current_year}, exceeding the valid human lifespan range (18–100 years)."
+            )
+        return v
+
     @field_validator("education")
     @classmethod
     def validate_education(cls, v: str) -> str:
@@ -234,15 +246,13 @@ class PredictRequest(BaseModel):
             try:
                 dt = pd.to_datetime(self.dt_customer, dayfirst=True)
             except Exception:
-                raise ValueError(f"dt_customer '{self.dt_customer}' is not a valid date.")
-        reference = pd.Timestamp("2014-06-29")
-        tenure = (reference - dt).days
-        if tenure < 0:
+                raise ValueError(f"dt_customer '{self.dt_customer}' is not a valid date format.")
+        
+        now = pd.Timestamp.now().normalize()
+        if dt > now:
             raise ValueError(
-                f"dt_customer '{self.dt_customer}' is after the training reference date "
-                f"(2014-06-29), which would produce a negative Customer_Tenure_Days "
-                f"({tenure} days).  The model was not trained on such values.  "
-                f"Please use a date on or before 2014-06-29."
+                f"dt_customer '{self.dt_customer}' cannot be in the future (current observation date: "
+                f"{now.strftime('%Y-%m-%d')}). Enrolment date must be on or before today."
             )
         return self
 
@@ -266,6 +276,10 @@ class PredictResponse(BaseModel):
     assignment_caveat:    str
     benchmark_comparison: List[BenchmarkComparison]
     recommendations:      List[str]
+    warnings:             List[str] = Field(
+        default_factory=list,
+        description="Transparent warnings for any inputs outside the historical training distribution.",
+    )
 
 
 # ─────────────────────────── /api/model-info ──────────────────────────────────

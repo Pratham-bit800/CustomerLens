@@ -20,8 +20,9 @@ import numpy as np
 import pandas as pd
 
 from config import (
+    TRAINING_DISTRIBUTION_BOUNDS,
+    TRAINING_SNAPSHOT_DATE,
     AGE_REFERENCE_YEAR,
-    TENURE_REFERENCE_DATE,
     SCALER_FEATURE_ORDER,
     SEGMENT_NAMES,
     SEGMENT_DESCRIPTIONS,
@@ -41,23 +42,59 @@ _BENCHMARK_FEATURES = [
 ]
 
 
-def _engineer_features(req: PredictRequest) -> pd.DataFrame:
+def _engineer_features(req: PredictRequest) -> Tuple[Dict[str, Any], str, str, List[str]]:
     """
-    Convert a PredictRequest into a single-row DataFrame of raw features,
-    then apply the exact same transformations as the notebook.
-    Returns a DataFrame with columns matching SCALER_FEATURE_ORDER.
+    Convert a PredictRequest into raw features and transformations.
+    
+    Observation Policy:
+      - Age is dynamically calculated as (observation_date.year - Year_Birth),
+        landing seamlessly into the adult customer distribution (mean 57.10, std 11.70).
+      - Customer tenure is calculated as (observation_date - Dt_Customer).days.
+        * For historical cohort records (enrolled <= 2014-06-29), observation_date is
+          the cohort snapshot date (2014-06-29).
+        * For modern customers (enrolled > 2014-06-29), observation_date is today's date.
+      - Inputs outside historical dataset limits (income > $162,397, tenure > 699 days,
+        age > 86) are accepted and predicted, but flagged with transparent extrapolation warnings.
+    
+    Returns:
+        numeric_row, education_simple, living_with, warnings
     """
-    # ── Age (matches notebook: AGE_REFERENCE_YEAR - Year_Birth) ──────────────
-    age = AGE_REFERENCE_YEAR - req.year_birth
+    warnings: List[str] = []
+    now = pd.Timestamp.now().normalize()
+    current_year = now.year
 
-    # ── Customer tenure (matches notebook: reference_date - Dt_Customer) ──────
-    # Date parsing: try ISO first, then day-first
+    # ── Age (dynamically anchored to observation year) ─────────────────────────
+    age = current_year - req.year_birth
+
+    # ── Customer tenure (dynamically anchored to observation date) ────────────
     try:
         dt = pd.to_datetime(req.dt_customer, dayfirst=False)
     except Exception:
         dt = pd.to_datetime(req.dt_customer, dayfirst=True)
-    reference_date = pd.Timestamp(TENURE_REFERENCE_DATE)
-    tenure_days = int((reference_date - dt).days)
+
+    snapshot_dt = pd.Timestamp(TRAINING_SNAPSHOT_DATE)
+    if dt <= snapshot_dt:
+        obs_date = snapshot_dt
+    else:
+        obs_date = now
+
+    tenure_days = int((obs_date - dt).days)
+
+    # ── Out-of-distribution extrapolation checks ──────────────────────────────
+    if float(req.income) > TRAINING_DISTRIBUTION_BOUNDS["max_income"]:
+        warnings.append(
+            f"High Household Income: Reported income (${req.income:,.0f}) exceeds the maximum observed in the "
+            f"training dataset (${TRAINING_DISTRIBUTION_BOUNDS['max_income']:,.0f}). PCA projection and cluster assignment are extrapolated."
+        )
+    if tenure_days > TRAINING_DISTRIBUTION_BOUNDS["max_tenure_days"]:
+        warnings.append(
+            f"Extended Customer Tenure: Tenure ({tenure_days:,} days / {tenure_days/365.25:.1f} years) exceeds the "
+            f"maximum training tenure ({TRAINING_DISTRIBUTION_BOUNDS['max_tenure_days']} days / ~1.9 years). Extrapolation beyond the 2-year acquisition cohort."
+        )
+    if age > TRAINING_DISTRIBUTION_BOUNDS["max_age"]:
+        warnings.append(
+            f"Customer Age ({age} years) exceeds the historical training dataset maximum ({TRAINING_DISTRIBUTION_BOUNDS['max_age']} years)."
+        )
 
     # ── Total Spending ─────────────────────────────────────────────────────────
     total_spending = (
@@ -100,7 +137,7 @@ def _engineer_features(req: PredictRequest) -> pd.DataFrame:
         "Total_Children":       total_children,
     }
 
-    return numeric_row, education_simple, living_with
+    return numeric_row, education_simple, living_with, warnings
 
 
 def predict_segment(req: PredictRequest) -> PredictResponse:
@@ -117,7 +154,7 @@ def predict_segment(req: PredictRequest) -> PredictResponse:
         raise RuntimeError("Data not loaded.  Call load_all_data() first.")
 
     # ── 1. Feature engineering ────────────────────────────────────────────────
-    numeric_row, education_simple, living_with = _engineer_features(req)
+    numeric_row, education_simple, living_with, warnings = _engineer_features(req)
 
     # ── 2. One-hot encode categorical features ────────────────────────────────
     cat_df = pd.DataFrame([[education_simple, living_with]],
@@ -180,13 +217,16 @@ def predict_segment(req: PredictRequest) -> PredictResponse:
             direction=direction,
         ))
 
-    caveat = (
+    caveat_parts = [
         f"Assigned via NearestCentroid surrogate in 3D PCA space.  "
         f"Surrogate agreement with reference Agglomerative cluster labels is 96.29 % on the dataset "
-        f"(ARI = 0.8947; 5-fold CV subset stability = {HOLDOUT_VALIDATION['mean_agreement_pct']} % ± {HOLDOUT_VALIDATION['std_agreement_pct']} %).  "
-        f"Note: Distance is Euclidean in PCA space, not a calibrated probability.  "
-        f"Disagreements concentrate at the Cluster 0 <-> 1 continuous income boundary."
-    )
+        f"(ARI = 0.8947; 5-fold CV subset stability = {HOLDOUT_VALIDATION['mean_agreement_pct']} % ± {HOLDOUT_VALIDATION['std_agreement_pct']} %).",
+        "Distance is an absolute Euclidean metric in 3D PCA space, not a calibrated probability or confidence percentage.",
+        "Disagreements concentrate at the Cluster 0 <-> 1 continuous income boundary.",
+    ]
+    if warnings:
+        caveat_parts.append("Out-of-Distribution Input: " + "; ".join(warnings) + " Prediction represents an extrapolation.")
+    caveat = "  ".join(caveat_parts)
 
     return PredictResponse(
         assigned_cluster=cluster_id,
@@ -198,4 +238,5 @@ def predict_segment(req: PredictRequest) -> PredictResponse:
         assignment_caveat=caveat,
         benchmark_comparison=benchmark,
         recommendations=SEGMENT_RECOMMENDATIONS[cluster_id],
+        warnings=warnings,
     )

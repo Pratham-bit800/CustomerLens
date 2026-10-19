@@ -54,9 +54,6 @@ export default function ModelInsights() {
   }
 
   const {
-    pipeline_steps,
-    raw_feature_count,
-    processed_feature_count,
     pca_components,
     pca_explained_variance,
     pca_cumulative_variance,
@@ -65,7 +62,6 @@ export default function ModelInsights() {
     final_n_clusters,
     final_linkage,
     silhouette_score,
-    elbow_optimal_k,
     feature_engineering,
     encoding_details,
     scaling_details,
@@ -102,25 +98,25 @@ export default function ModelInsights() {
           badge="Compression"
         />
         <MetricCard
-          title="Agreement with Reference"
-          value={`${prediction_method?.validation?.mean_held_out_agreement_pct}%`}
-          subtitle={`±${prediction_method?.validation?.std_held_out_agreement_pct}% (5-Fold CV on 2,236)`}
+          title="Surrogate Fidelity"
+          value={`${prediction_method?.validation?.in_sample_agreement_pct || 96.29}%`}
+          subtitle={`ARI = ${prediction_method?.validation?.in_sample_ARI || 0.8947} (In-Sample)`}
           icon={CheckCircle}
-          badge="Surrogate Validation"
+          badge="Surrogate Fidelity"
           badgeType="primary"
         />
       </div>
 
-      {/* Critical Methodological Note on Held-Out Validation */}
+      {/* Critical Methodological Note on Surrogate Fidelity */}
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 text-xs text-indigo-950 shadow-xs">
         <div className="flex items-start gap-3">
           <HelpCircle className="h-5 w-5 text-indigo-600 mt-0.5 shrink-0" />
           <div className="space-y-1">
             <h4 className="font-semibold text-indigo-950">
-              Evaluation Clarification: "Agreement with Reference Clustering", Not "Prediction Accuracy"
+              Evaluation Clarification: In-Sample Surrogate Fidelity, Not Predictive Accuracy
             </h4>
             <p className="text-indigo-800 leading-relaxed">
-              Because agglomerative hierarchical clustering does not generate a parametric decision boundary for out-of-sample points, the inference endpoint uses a <span className="font-semibold">NearestCentroid surrogate in 3D PCA space</span>. The reported metric ({prediction_method?.validation?.mean_held_out_agreement_pct}%) represents the <span className="font-semibold">held-out agreement</span> between the surrogate and the reference AgglomerativeClustering labels across 5-fold cross-validation. It is not ground-truth classification accuracy.
+              Because Agglomerative hierarchical clustering produces non-parametric partitions without an out-of-sample decision boundary, the inference endpoint uses a <span className="font-semibold">NearestCentroid surrogate in 3D PCA space</span>. The reported in-sample fidelity ({prediction_method?.validation?.in_sample_agreement_pct || 96.29}%, ARI = {prediction_method?.validation?.in_sample_ARI || 0.8947}) measures how closely the surrogate reproduces the reference Agglomerative clustering on the 2,236 historical customers. A 5-fold cross-validation evaluated subset stability ({prediction_method?.validation?.mean_held_out_agreement_pct}% ± {prediction_method?.validation?.std_held_out_agreement_pct}%). These metrics do not establish generalization to unseen customers, and Euclidean centroid distance is not a probability.
             </p>
           </div>
         </div>
@@ -251,10 +247,10 @@ export default function ModelInsights() {
         </Card>
       </div>
 
-      {/* Cross-Validation Agreement Breakdown */}
+      {/* Surrogate Cluster Agreement & Stability Breakdown */}
       <Card
-        title="NearestCentroid Surrogate Cross-Validation"
-        subtitle="5-Fold cross-validation held-out agreement metrics across clusters"
+        title="Surrogate Cluster Agreement & Subsample Stability"
+        subtitle="Agreement metrics across clusters (5-Fold cross-validation subset stability)"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           {Object.entries(prediction_method?.validation?.per_cluster_accuracy || {}).map(

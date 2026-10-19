@@ -31,7 +31,8 @@ log = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log.info("CustomerLens backend starting - loading data and artifacts ...")
-    data_loader.load_all_data()
+    if data_loader.master_df is None:
+        data_loader.load_all_data()
     log.info("Startup complete.  Customers loaded: %d", len(data_loader.master_df))
     yield
     log.info("CustomerLens backend shutting down.")
@@ -47,17 +48,37 @@ app = FastAPI(
         "marketing analytics dataset."
     ),
     version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
+
+# ── Ensure data is loaded (failsafe for serverless environments) ───────────────
+@app.middleware("http")
+async def ensure_data_loaded(request, call_next):
+    if data_loader.master_df is None:
+        data_loader.load_all_data()
+    return await call_next(request)
 
 # ── CORS ───────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+from fastapi.responses import RedirectResponse
+
+@app.get("/docs", include_in_schema=False)
+def docs_redirect():
+    return RedirectResponse(url="/api/docs")
+
+@app.get("/redoc", include_in_schema=False)
+def redoc_redirect():
+    return RedirectResponse(url="/api/redoc")
 
 # ── Health check ───────────────────────────────────────────────────────────────
 from fastapi.responses import JSONResponse

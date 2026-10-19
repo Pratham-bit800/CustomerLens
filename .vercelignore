@@ -1,0 +1,11 @@
+notebooks/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.git/
+.vscode/
+.idea/
+*.md
+!README.md

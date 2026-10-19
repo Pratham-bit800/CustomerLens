@@ -19,7 +19,6 @@ import SegmentDistributionChart from '../components/charts/SegmentDistributionCh
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorAlert from '../components/common/ErrorAlert';
 import { formatCurrency, formatNumber } from '../utils/formatters';
-import { SEGMENTS } from '../utils/constants';
 
 export default function OverviewDashboard() {
   const [data, setData] = useState(null);
@@ -63,8 +62,6 @@ export default function OverviewDashboard() {
   const {
     total_customers,
     total_segments,
-    raw_feature_count,
-    processed_feature_count,
     cluster_distribution,
     overall_averages,
   } = data;
@@ -226,7 +223,6 @@ export default function OverviewDashboard() {
           >
             <div className="space-y-3">
               {cluster_distribution.map((cluster) => {
-                const segMeta = SEGMENTS[cluster.cluster_id];
                 return (
                   <div
                     key={cluster.cluster_id}

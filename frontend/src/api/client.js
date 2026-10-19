@@ -3,8 +3,11 @@
  * Handles base URL configuration, headers, error parsing, and timeouts.
  */
 
-// Prefer environment variable, or proxy /api in dev, or default to direct localhost:8000
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// In production (Vercel deployment), use same-origin relative '/api' unless VITE_API_URL is explicitly set.
+// In local development, direct to 'http://127.0.0.1:8000/api' (or proxy via Vite).
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000/api');
 
 /**
  * Format Pydantic validation errors or standard HTTP errors into readable messages.

@@ -38,6 +38,9 @@ const INITIAL_FORM = {
   response: 0,
 };
 
+const CURRENT_DATE_STRING = new Date().toISOString().split('T')[0];
+const MAX_BIRTH_YEAR = new Date().getFullYear() - 18;
+
 export default function PredictSegment() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
@@ -100,17 +103,16 @@ export default function PredictSegment() {
 
   return (
     <div className="space-y-6">
-      {/* Historical Data Limitation Notice */}
-      <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 shadow-xs">
+      {/* Prediction Methodology Notice */}
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 text-xs text-indigo-950 shadow-xs">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-4.5 w-4.5 text-amber-600 mt-0.5 shrink-0" />
+          <Info className="h-4.5 w-4.5 text-indigo-600 mt-0.5 shrink-0" />
           <div className="space-y-1">
-            <h4 className="font-semibold text-amber-950">
-              Important Historical Model & Data Constraints
+            <h4 className="font-semibold text-indigo-950">
+              Customer Segmentation & Prediction Architecture
             </h4>
-            <p className="text-amber-800 leading-relaxed">
-              This pipeline uses fixed training anchors: <span className="font-mono font-semibold">Age = 2026 - Year_Birth</span> and customer tenure calculated relative to <span className="font-mono font-semibold">2014-06-29</span> (latest enrolment in training dataset).
-              Enrolment dates after <span className="font-semibold">2014-06-29</span> produce negative tenure values and are strictly rejected by the backend validation schema. Income must be &lt; $600,000 (training outlier bound).
+            <p className="text-indigo-800 leading-relaxed">
+              New customer profiles are mapped into 3D PCA space and assigned to the closest segment using a <span className="font-semibold">NearestCentroid surrogate classifier</span> (96.29% agreement with reference Agglomerative clusters). Both modern and historical enrolment dates are supported; inputs exceeding the historical training bounds (Income &gt; $162,397 or Tenure &gt; 699 days) are transparently flagged as extrapolations.
             </p>
           </div>
         </div>
@@ -181,12 +183,12 @@ export default function PredictSegment() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
-                      Birth Year (1940–2008)
+                      Birth Year (Age ≥ 18)
                     </label>
                     <input
                       type="number"
-                      min={1940}
-                      max={2008}
+                      min={1925}
+                      max={MAX_BIRTH_YEAR}
                       required
                       value={form.year_birth}
                       onChange={(e) => handleChange('year_birth', e.target.value)}
@@ -237,7 +239,7 @@ export default function PredictSegment() {
                     <input
                       type="number"
                       min={1}
-                      max={599999}
+                      max={10000000}
                       step={100}
                       required
                       value={form.income}
@@ -286,11 +288,11 @@ export default function PredictSegment() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
-                      Enrolment Date (≤ 2014-06-29)
+                      Enrolment Date (≤ Today)
                     </label>
                     <input
                       type="date"
-                      max="2014-06-29"
+                      max={CURRENT_DATE_STRING}
                       required
                       value={form.dt_customer}
                       onChange={(e) => handleChange('dt_customer', e.target.value)}
@@ -554,6 +556,25 @@ export default function PredictSegment() {
                     Centroid distance is an absolute Euclidean metric in 3D PCA space, not a calibrated probability or confidence percentage.
                   </div>
                 </div>
+
+                {/* Extrapolation Warnings (if any inputs exceed training bounds) */}
+                {result.warnings && result.warnings.length > 0 && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-950 shadow-xs">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div className="space-y-1">
+                        <span className="font-semibold text-amber-950 text-xs">
+                          Extrapolation Warning (Outside Historical Training Bounds):
+                        </span>
+                        <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-900 leading-relaxed">
+                          {result.warnings.map((w, idx) => (
+                            <li key={idx}>{w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Assignment Caveat */}
                 {result.assignment_caveat && (

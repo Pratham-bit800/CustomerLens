@@ -3,6 +3,7 @@ config.py — Centralised configuration for the CustomerLens backend.
 All file paths and tuneable constants live here so that nothing is
 hard-coded elsewhere in the codebase.
 """
+import os
 from pathlib import Path
 
 # ── Workspace root (one level up from backend/) ───────────────────────────────
@@ -38,25 +39,33 @@ SCALER_FEATURE_ORDER = [
 # Categorical columns for OHE (must match training order)
 CATEGORICAL_COLS = ["Education", "Living_With"]
 
-# ── Feature-engineering constants (MUST match notebook logic) ─────────────────
+# ── Feature-engineering & Snapshot Policy ─────────────────────────────────────
 #
-# AGE_REFERENCE_YEAR:
-#   The notebook computed Age = 2026 - Year_Birth.  Using the same constant
-#   ensures the age values land in the same region of the StandardScaler's
-#   fitted distribution.  Do NOT change this to the current calendar year.
-AGE_REFERENCE_YEAR = 2026
+# Historical Training Anchors:
+# The raw dataset represents a customer campaign cohort ending on 2014-06-29.
+TRAINING_SNAPSHOT_DATE = "2014-06-29"
+TRAINING_SNAPSHOT_YEAR = 2014
 
-# TENURE_REFERENCE_DATE:
-#   Customer tenure was computed as (max_Dt_Customer - Dt_Customer).days,
-#   where max_Dt_Customer is the latest enrolment date in the raw dataset
-#   (2014-06-29).  This is a FIXED historical anchor.
-#   Limitation: a newly entered customer with Dt_Customer > 2014-06-29 would
-#   produce a negative tenure, which the backend catches and rejects.
-TENURE_REFERENCE_DATE = "2014-06-29"
+# The training notebook calculated Age = 2026 - Year_Birth, anchoring the
+# adult customer distribution (mean 57.10, std 11.70, range 30–86).
+# Serving dynamically calculates Age = observation_date.year - Year_Birth
+# and Tenure = (observation_date - Dt_Customer).days, eliminating hardcoded
+# calendar limits while maintaining exact StandardScaler distribution alignment.
+AGE_TRAINING_BASE_YEAR = 2026
+AGE_REFERENCE_YEAR     = 2026  # Alias for backward compatibility
+TENURE_REFERENCE_DATE  = "2014-06-29"  # Training snapshot anchor
 
-# Outlier thresholds used during training (documented for reference only)
-OUTLIER_MAX_AGE    = 90        # Age < 90  was kept during training
-OUTLIER_MAX_INCOME = 600_000   # Income < 600 000 was kept during training
+# Statistical bounds of the historical training dataset (for extrapolation detection):
+TRAINING_DISTRIBUTION_BOUNDS = {
+    "max_income": 162_397.0,     # Observed maximum in cleaned training dataset
+    "max_tenure_days": 699,      # Maximum tenure in the 2-year cohort (2012-07-30 to 2014-06-29)
+    "max_age": 86,               # Maximum age in training data
+    "min_age": 18,               # Minimum valid adult customer age
+}
+
+# Historical outlier removal thresholds applied to raw dataset:
+OUTLIER_MAX_AGE    = 90        # Age < 90 was kept during training
+OUTLIER_MAX_INCOME = 600_000   # Income < 600,000 was kept during training
 
 # ── Segment metadata (derived from cluster profiles) ──────────────────────────
 SEGMENT_NAMES = {
@@ -139,9 +148,21 @@ HOLDOUT_VALIDATION = {
 }
 
 # ── API server settings ────────────────────────────────────────────────────────
-API_HOST     = "0.0.0.0"
-API_PORT     = 8000
-CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+API_HOST     = os.environ.get("API_HOST", "127.0.0.1")
+API_PORT     = int(os.environ.get("API_PORT", 8000))
+
+# Allowed origins: default local dev hosts + any VERCEL_URL or custom CORS_ORIGINS
+_DEFAULT_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+_EXTRA_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+if os.environ.get("VERCEL_URL"):
+    _EXTRA_ORIGINS.append(f"https://{os.environ['VERCEL_URL']}")
+
+CORS_ORIGINS = list(dict.fromkeys(_DEFAULT_ORIGINS + _EXTRA_ORIGINS))
 
 # Pagination defaults
 DEFAULT_PAGE_SIZE = 25

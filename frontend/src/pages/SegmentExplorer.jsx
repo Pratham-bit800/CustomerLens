@@ -179,7 +179,11 @@ export default function SegmentExplorer() {
       {/* PCA Scatter Plot Section */}
       <Card
         title="PCA Projection (PC1 vs PC2)"
-        subtitle="Customer transaction and demographic embeddings projected into 2D principal component space"
+        subtitle={
+          pointLimit < 2236
+            ? `Random sample of ${pca_points?.length?.toLocaleString() || pointLimit} points (sampling active; not complete dataset)`
+            : 'Complete historical dataset: all 2,236 customer embeddings projected into 2D principal component space'
+        }
         actions={
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Points:</span>
