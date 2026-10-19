@@ -14,27 +14,27 @@ import {
 const NAV_ITEMS = [
   {
     to: '/',
-    label: 'Overview Dashboard',
+    label: 'Customer Overview',
     icon: LayoutDashboard,
     badge: null,
   },
   {
     to: '/segments',
-    label: 'Segment Explorer',
+    label: 'Customer Segments',
     icon: Layers,
-    badge: '4 Clusters',
+    badge: '4 Groups',
   },
   {
     to: '/customers',
-    label: 'Customer Explorer',
+    label: 'Customer Directory',
     icon: Users,
-    badge: '2,236 Records',
+    badge: '2,236 Customers',
   },
   {
     to: '/predict',
-    label: 'Predict Customer Segment',
+    label: 'Customer Group Finder',
     icon: Sparkles,
-    badge: 'Inference',
+    badge: 'Match Profile',
   },
   {
     to: '/business-insights',
@@ -44,9 +44,9 @@ const NAV_ITEMS = [
   },
   {
     to: '/model-insights',
-    label: 'Model Insights',
+    label: 'How Customer Lens Works',
     icon: Cpu,
-    badge: 'ML Pipeline',
+    badge: 'Methodology',
   },
 ];
 
@@ -77,7 +77,7 @@ export default function Sidebar({ isOpen, onClose, backendStatus }) {
               <div className="flex items-center gap-1.5">
                 <span className="font-bold tracking-tight text-white text-base">CustomerLens</span>
                 <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded-sm bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  ML
+                  Analytics
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">Customer Intelligence</p>
@@ -149,13 +149,13 @@ export default function Sidebar({ isOpen, onClose, backendStatus }) {
                   />
                 </span>
                 <span className="text-xs font-medium text-slate-300">
-                  {backendStatus?.isHealthy ? 'FastAPI Connected' : 'Connecting to API...'}
+                  {backendStatus?.isHealthy ? 'Analytics Engine Online' : 'Connecting to API...'}
                 </span>
               </div>
               <Radio className="h-3.5 w-3.5 text-slate-400" />
             </div>
             <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between">
-              <span>Artifacts: Agglomerative (k=4)</span>
+              <span>4 Customer Groups</span>
               <span className="font-mono text-slate-400">v1.0.0</span>
             </div>
           </div>

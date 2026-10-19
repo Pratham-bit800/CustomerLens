@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Activity, ShieldCheck } from 'lucide-react';
+import { Menu, Activity } from 'lucide-react';
 import { SEGMENTS } from '../../utils/constants';
 
 export default function Header({

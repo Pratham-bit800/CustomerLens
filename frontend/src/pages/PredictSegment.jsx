@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
   Sparkles,
-  AlertTriangle,
-  Info,
   CheckCircle,
+  AlertTriangle,
   RotateCcw,
+  UserCheck,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';
@@ -15,13 +17,13 @@ import { formatDelta } from '../utils/formatters';
 import { PRESET_PROFILES } from '../utils/constants';
 
 const INITIAL_FORM = {
-  year_birth: 1975,
+  year_birth: 1985,
   education: 'Graduation',
   marital_status: 'Married',
   income: 52000,
   kidhome: 1,
   teenhome: 0,
-  dt_customer: '2013-05-15',
+  dt_customer: '2025-05-15',
   recency: 45,
   mnt_wines: 250,
   mnt_fruits: 20,
@@ -46,6 +48,8 @@ export default function PredictSegment() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [showTechnicalNotice, setShowTechnicalNotice] = useState(false);
+  const [showTechnicalResult, setShowTechnicalResult] = useState(false);
 
   const handleChange = (field, value) => {
     setForm((prev) => ({
@@ -55,7 +59,7 @@ export default function PredictSegment() {
   };
 
   const handleApplyPreset = (preset) => {
-    setForm({ ...preset.data });
+    setForm(preset.data);
     setResult(null);
     setError(null);
   };
@@ -64,17 +68,15 @@ export default function PredictSegment() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setResult(null);
 
-    // Cast numeric fields properly
     const payload = {
       year_birth: Number(form.year_birth),
-      education: String(form.education),
-      marital_status: String(form.marital_status),
+      education: form.education,
+      marital_status: form.marital_status,
       income: Number(form.income),
       kidhome: Number(form.kidhome),
       teenhome: Number(form.teenhome),
-      dt_customer: String(form.dt_customer),
+      dt_customer: form.dt_customer,
       recency: Number(form.recency),
       mnt_wines: Number(form.mnt_wines),
       mnt_fruits: Number(form.mnt_fruits),
@@ -103,25 +105,46 @@ export default function PredictSegment() {
 
   return (
     <div className="space-y-6">
-      {/* Prediction Methodology Notice */}
-      <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 text-xs text-indigo-950 shadow-xs">
-        <div className="flex items-start gap-3">
-          <Info className="h-4.5 w-4.5 text-indigo-600 mt-0.5 shrink-0" />
-          <div className="space-y-1">
-            <h4 className="font-semibold text-indigo-950">
-              Customer Segmentation & Prediction Architecture
-            </h4>
-            <p className="text-indigo-800 leading-relaxed">
-              New customer profiles are mapped into 3D PCA space and assigned to the closest segment using a <span className="font-semibold">NearestCentroid surrogate classifier</span> (96.29% agreement with reference Agglomerative clusters). Both modern and historical enrolment dates are supported; inputs exceeding the historical training bounds (Income &gt; $162,397 or Tenure &gt; 699 days) are transparently flagged as extrapolations.
+      {/* Business-Friendly Welcome Banner */}
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-5 text-indigo-950 shadow-xs">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <UserCheck className="h-5 w-5 text-indigo-600 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <h4 className="font-semibold text-indigo-950 text-sm">
+                Customer Group Finder
+              </h4>
+              <p className="text-xs text-indigo-900 leading-relaxed">
+                Enter a customer’s demographic and purchasing information to find which existing customer group they most resemble. This helps you select relevant marketing campaigns, discount offers, and product recommendations tailored to their lifestyle.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowTechnicalNotice(!showTechnicalNotice)}
+            className="text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 shrink-0 inline-flex items-center gap-1 bg-white/70 px-2.5 py-1 rounded-lg border border-indigo-200/80 transition-colors"
+          >
+            <span>{showTechnicalNotice ? 'Hide Technical Note' : 'Methodology Note'}</span>
+            {showTechnicalNotice ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+        </div>
+
+        {showTechnicalNotice && (
+          <div className="mt-3 pt-3 border-t border-indigo-200/60 text-xs text-indigo-900 leading-relaxed space-y-1">
+            <p>
+              <span className="font-semibold">Assignment Architecture:</span> Inputs are standardized with our pre-trained scaler, projected into 3D PCA space, and matched against cluster centroids using a NearestCentroid surrogate (achieving 96.29% agreement with the reference Agglomerative clustering).
+            </p>
+            <p>
+              <span className="font-semibold">Extrapolation Handling:</span> Both modern and historical dates are supported. Incomes &gt; $162,397 or tenures &gt; 699 days represent low-density extrapolation regions and are transparently flagged with non-fatal warnings.
             </p>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Preset Profiles Selector */}
       <Card
-        title="Quick Test Presets"
-        subtitle="Load pre-configured customer archetypes to test the model in 1 click"
+        title="Test with Example Customer Profiles"
+        subtitle="Click any archetype below to populate the form with realistic customer figures in 1 click"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {PRESET_PROFILES.map((preset, idx) => (
@@ -129,15 +152,15 @@ export default function PredictSegment() {
               key={idx}
               type="button"
               onClick={() => handleApplyPreset(preset)}
-              className="text-left p-3 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group"
+              className="text-left p-3.5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors">
                   {preset.name}
                 </span>
-                <Sparkles className="h-3 w-3 text-slate-400 group-hover:text-indigo-500" />
+                <Sparkles className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500" />
               </div>
-              <p className="text-[11px] text-slate-500 leading-tight">
+              <p className="text-[11px] text-slate-500 leading-snug">
                 {preset.description}
               </p>
             </button>
@@ -150,35 +173,24 @@ export default function PredictSegment() {
         {/* Form Column */}
         <div className="lg:col-span-7">
           <Card
-            title="Customer Profile Input"
-            subtitle="Enter demographic, financial, and transactional attributes"
+            title="Customer Profile Details"
+            subtitle="Enter household, financial, and shopping habits to estimate the customer group"
             actions={
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm(INITIAL_FORM)}
-                  className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  <span>Reset</span>
-                </button>
-                <button
-                  type="submit"
-                  form="predict-form"
-                  disabled={loading}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 transition-colors disabled:opacity-50"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>{loading ? 'Classifying...' : 'Classify Customer'}</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setForm(INITIAL_FORM)}
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 px-2.5 py-1 rounded-md hover:bg-slate-100 transition-colors"
+              >
+                <RotateCcw className="h-3 w-3" />
+                <span>Reset Form</span>
+              </button>
             }
           >
-            <form id="predict-form" onSubmit={handleSubmit} className="space-y-5 text-xs">
-              {/* Demographics Group */}
+            <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+              {/* Demographics & Household */}
               <div>
                 <h4 className="font-bold uppercase tracking-wider text-slate-400 text-[11px] mb-2.5">
-                  1. Demographics & Household
+                  1. Household & Demographics
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -198,40 +210,76 @@ export default function PredictSegment() {
 
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
-                      Education
+                      Education Level
                     </label>
                     <select
                       value={form.education}
                       onChange={(e) => handleChange('education', e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"
                     >
-                      <option value="Graduation">Graduation</option>
+                      <option value="Graduation">Graduation (Bachelor's)</option>
                       <option value="PhD">PhD</option>
-                      <option value="Master">Master</option>
-                      <option value="2n Cycle">2n Cycle</option>
-                      <option value="Basic">Basic</option>
+                      <option value="Master">Master's</option>
+                      <option value="2n Cycle">2nd Cycle (Advanced)</option>
+                      <option value="Basic">Basic (High School)</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
-                      Marital Status
+                      Relationship Status
                     </label>
                     <select
                       value={form.marital_status}
                       onChange={(e) => handleChange('marital_status', e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"
                     >
-                      <option value="Married">Married</option>
-                      <option value="Together">Together</option>
-                      <option value="Single">Single</option>
-                      <option value="Divorced">Divorced</option>
-                      <option value="Widow">Widow</option>
+                      <option value="Married">Married (Partner)</option>
+                      <option value="Together">Living Together (Partner)</option>
+                      <option value="Single">Single (Solo)</option>
+                      <option value="Divorced">Divorced (Solo)</option>
+                      <option value="Widow">Widow (Solo)</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className="block text-slate-700 font-medium mb-1">
+                      Young Children at Home (0–2)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={2}
+                      value={form.kidhome}
+                      onChange={(e) => handleChange('kidhome', e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-medium mb-1">
+                      Teenagers at Home (0–2)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={2}
+                      value={form.teenhome}
+                      onChange={(e) => handleChange('teenhome', e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Financials & Enrollment */}
+              <div className="pt-3 border-t border-slate-100">
+                <h4 className="font-bold uppercase tracking-wider text-slate-400 text-[11px] mb-2.5">
+                  2. Household Income & Enrollment
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
                       Annual Income ($)
@@ -240,52 +288,17 @@ export default function PredictSegment() {
                       type="number"
                       min={1}
                       max={10000000}
-                      step={100}
+                      step="any"
                       required
                       value={form.income}
                       onChange={(e) => handleChange('income', e.target.value)}
                       className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
                     />
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Typical customer income: $20,000 – $120,000
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-slate-700 font-medium mb-1">
-                      Kids at Home (0–3)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={3}
-                      required
-                      value={form.kidhome}
-                      onChange={(e) => handleChange('kidhome', e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 font-medium mb-1">
-                      Teens at Home (0–3)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={3}
-                      required
-                      value={form.teenhome}
-                      onChange={(e) => handleChange('teenhome', e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Enrolment Date & Recency */}
-              <div className="pt-3 border-t border-slate-100">
-                <h4 className="font-bold uppercase tracking-wider text-slate-400 text-[11px] mb-2.5">
-                  2. Enrolment & Engagement Activity
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
                       Enrolment Date (≤ Today)
@@ -299,36 +312,36 @@ export default function PredictSegment() {
                       className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-slate-700 font-medium mb-1">
-                      Recency (Days since last purchase: 0–99)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={99}
-                      required
-                      value={form.recency}
-                      onChange={(e) => handleChange('recency', e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-                    />
-                  </div>
+                <div className="mt-3">
+                  <label className="block text-slate-700 font-medium mb-1">
+                    Days Since Last Order (Recency: 0–99 days)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={99}
+                    required
+                    value={form.recency}
+                    onChange={(e) => handleChange('recency', e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
+                  />
                 </div>
               </div>
 
-              {/* Product Category Expenditures */}
+              {/* Product Spending */}
               <div className="pt-3 border-t border-slate-100">
                 <h4 className="font-bold uppercase tracking-wider text-slate-400 text-[11px] mb-2.5">
-                  3. Category Spending ($)
+                  3. Spending by Category (Past 2 Years in $)
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Wines (0–1500)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Wines</label>
                     <input
                       type="number"
                       min={0}
-                      max={1500}
+                      max={1493}
                       value={form.mnt_wines}
                       onChange={(e) => handleChange('mnt_wines', e.target.value)}
                       className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
@@ -336,7 +349,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Meat (0–1725)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Meat Products</label>
                     <input
                       type="number"
                       min={0}
@@ -348,7 +361,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Fish (0–259)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Fish Products</label>
                     <input
                       type="number"
                       min={0}
@@ -360,11 +373,11 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Fruits (0–200)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Fruits</label>
                     <input
                       type="number"
                       min={0}
-                      max={200}
+                      max={199}
                       value={form.mnt_fruits}
                       onChange={(e) => handleChange('mnt_fruits', e.target.value)}
                       className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
@@ -372,7 +385,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Sweets (0–263)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Sweets</label>
                     <input
                       type="number"
                       min={0}
@@ -384,7 +397,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Gold (0–362)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Gold Products</label>
                     <input
                       type="number"
                       min={0}
@@ -400,11 +413,11 @@ export default function PredictSegment() {
               {/* Purchasing Channels & Campaigns */}
               <div className="pt-3 border-t border-slate-100">
                 <h4 className="font-bold uppercase tracking-wider text-slate-400 text-[11px] mb-2.5">
-                  4. Purchasing Channels & Marketing Campaigns
+                  4. Purchasing Channels & Promotion History
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Deals (0–15)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Deals Purchases</label>
                     <input
                       type="number"
                       min={0}
@@ -416,7 +429,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Web Purchases (0–27)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Web Purchases</label>
                     <input
                       type="number"
                       min={0}
@@ -428,7 +441,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Catalog (0–28)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Catalog Purchases</label>
                     <input
                       type="number"
                       min={0}
@@ -440,7 +453,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Store (0–13)</label>
+                    <label className="block text-slate-700 font-medium mb-1">In-Store Purchases</label>
                     <input
                       type="number"
                       min={0}
@@ -452,7 +465,7 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Web Visits / Mo (0–20)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Web Visits / Month</label>
                     <input
                       type="number"
                       min={0}
@@ -464,14 +477,14 @@ export default function PredictSegment() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-medium mb-1">Response (0 or 1)</label>
+                    <label className="block text-slate-700 font-medium mb-1">Accepted Promotion?</label>
                     <select
                       value={form.response}
                       onChange={(e) => handleChange('response', e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white font-mono"
+                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden bg-white"
                     >
-                      <option value={0}>0 (No campaign accepted)</option>
-                      <option value={1}>1 (Accepted campaign)</option>
+                      <option value={0}>No (0)</option>
+                      <option value={1}>Yes (1)</option>
                     </select>
                   </div>
                 </div>
@@ -487,12 +500,12 @@ export default function PredictSegment() {
                   {loading ? (
                     <>
                       <LoadingSpinner size="sm" message="" />
-                      <span>Computing 3D PCA projection & assigning centroid...</span>
+                      <span>Matching customer against group benchmarks...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4" />
-                      <span>Classify Customer Segment</span>
+                      <span>Find Matching Customer Group</span>
                     </>
                   )}
                 </button>
@@ -505,22 +518,22 @@ export default function PredictSegment() {
         <div className="lg:col-span-5 space-y-6">
           {error && (
             <ErrorAlert
-              title="Validation or Prediction Error"
+              title="Input Error"
               message={error}
             />
           )}
 
           {result ? (
             <Card
-              title="Prediction Output"
-              subtitle="Assigned via NearestCentroid surrogate in 3D PCA space"
+              title="Customer Group Match"
+              subtitle="Estimated customer group based on closest lifestyle and spending alignment"
               className="border-indigo-200 shadow-md ring-1 ring-indigo-500/10"
             >
               <div className="space-y-5 text-xs">
                 {/* Result Hero Banner */}
                 <div className="rounded-xl bg-gradient-to-br from-slate-900 to-indigo-950 p-5 text-white shadow-sm">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-300 mb-1">
-                    Predicted Segment Assignment
+                    Best Matching Customer Group
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xl font-bold">
@@ -537,23 +550,33 @@ export default function PredictSegment() {
                   </p>
                 </div>
 
-                {/* Distance to Centroid & Disclaimer */}
+                {/* Match Proximity Explanation */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-slate-700">Distance to Centroid:</span>
+                    <span className="font-medium text-slate-700">Profile Match Distance:</span>
                     <span className="font-mono font-bold text-slate-900 text-sm">
                       {result.distance_to_centroid}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">PCA Coordinates:</span>
-                    <span className="font-mono text-slate-700">
-                      ({result.pca_coordinates.pc1}, {result.pca_coordinates.pc2}, {result.pca_coordinates.pc3})
-                    </span>
-                  </div>
-                  <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-500 leading-relaxed">
-                    <span className="font-semibold text-slate-700">Methodological Note: </span>
-                    Centroid distance is an absolute Euclidean metric in 3D PCA space, not a calibrated probability or confidence percentage.
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    This score measures how close this customer’s profile is to the typical center of this group. Lower values indicate a closer, more typical fit. (This is a geometric proximity score, not a percentage or probability).
+                  </p>
+
+                  {/* Collapsible Technical Result Data */}
+                  <div className="pt-2 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setShowTechnicalResult(!showTechnicalResult)}
+                      className="flex items-center justify-between w-full text-[11px] font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                    >
+                      <span>Technical Map Coordinates</span>
+                      {showTechnicalResult ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </button>
+                    {showTechnicalResult && (
+                      <div className="mt-2 text-[11px] font-mono text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200/80">
+                        PC1: {result.pca_coordinates.pc1}, PC2: {result.pca_coordinates.pc2}, PC3: {result.pca_coordinates.pc3}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -564,42 +587,33 @@ export default function PredictSegment() {
                       <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                       <div className="space-y-1">
                         <span className="font-semibold text-amber-950 text-xs">
-                          Extrapolation Warning (Outside Historical Training Bounds):
+                          Notice: Customer profile is outside standard training bounds
                         </span>
                         <ul className="list-disc list-inside space-y-0.5 text-[11px] text-amber-900 leading-relaxed">
                           {result.warnings.map((w, idx) => (
                             <li key={idx}>{w}</li>
                           ))}
                         </ul>
+                        <p className="text-[10px] text-amber-800 pt-1">
+                          The system estimated the closest matching group, but this customer represents an unusually high income or tenure compared to our core dataset.
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Assignment Caveat */}
-                {result.assignment_caveat && (
-                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 text-xs text-indigo-950">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
-                      <p className="text-[11px] leading-relaxed">
-                        {result.assignment_caveat}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Benchmark Deviations (>15%) */}
+                {/* Benchmark Comparison vs Group Mean */}
                 {result.benchmark_comparison?.length > 0 && (
                   <div>
                     <h4 className="font-bold uppercase tracking-wider text-slate-500 text-[11px] mb-2">
-                      Feature Comparison vs Cluster Mean
+                      How This Customer Compares to the Group Average
                     </h4>
                     <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
                       {result.benchmark_comparison.map((b, i) => (
                         <div key={i} className="flex items-center justify-between p-2.5 text-[11px]">
                           <span className="font-medium text-slate-700">{b.feature}</span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-slate-900">
+                            <span className="text-slate-900 font-medium">
                               {b.customer_value} vs {b.cluster_average}
                             </span>
                             <span
@@ -618,11 +632,11 @@ export default function PredictSegment() {
                   </div>
                 )}
 
-                {/* Recommendations */}
+                {/* Business Recommendations */}
                 {result.recommendations?.length > 0 && (
                   <div>
                     <h4 className="font-bold uppercase tracking-wider text-slate-500 text-[11px] mb-2">
-                      Suggested Segment Actions
+                      Recommended Marketing Actions
                     </h4>
                     <ul className="space-y-1.5 text-xs text-slate-600">
                       {result.recommendations.map((rec, i) => (
@@ -638,14 +652,14 @@ export default function PredictSegment() {
             </Card>
           ) : (
             <Card
-              title="Awaiting Classification"
-              subtitle="Submit the customer profile form on the left to generate inference"
+              title="Ready to Find Customer Group"
+              subtitle="Submit the customer profile form on the left or click an archetype above"
             >
               <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
                 <Sparkles className="h-10 w-10 text-slate-300 mb-3" />
-                <h4 className="text-sm font-semibold text-slate-700">Ready for Inference</h4>
+                <h4 className="text-sm font-semibold text-slate-700">Awaiting Customer Details</h4>
                 <p className="mt-1 text-xs text-slate-500 max-w-xs">
-                  Fill in the 21 customer attributes or choose one of the preset archetypes above to see real-time segment assignment.
+                  Fill in the customer information or choose one of the pre-configured examples above to see their closest matching customer group.
                 </p>
               </div>
             </Card>

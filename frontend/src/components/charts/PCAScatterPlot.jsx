@@ -12,6 +12,62 @@ import {
 import { SEGMENTS } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 
+function ScatterTooltip({ active, payload }) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const isCentroid = data.isCentroid;
+    const segment = SEGMENTS[data.cluster_id];
+
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-lg text-xs max-w-xs">
+        <div className="flex items-center gap-2 font-semibold text-slate-900 pb-1.5 border-b border-slate-100">
+          <span
+            className="h-2.5 w-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: segment?.color || '#6366F1' }}
+          />
+          <span className="truncate">
+            {isCentroid ? `Group Center: ${segment?.name}` : `Customer #${data.customer_id}`}
+          </span>
+        </div>
+
+        <div className="mt-2 space-y-1 text-slate-600">
+          <div className="flex justify-between">
+            <span>Customer Group:</span>
+            <span className="font-semibold text-slate-900">{segment?.shortName || `Group ${data.cluster_id}`}</span>
+          </div>
+          {!isCentroid ? (
+            <>
+              <div className="flex justify-between">
+                <span>Annual Income:</span>
+                <span className="font-medium text-slate-900">{formatCurrency(data.income)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Spending:</span>
+                <span className="font-medium text-slate-900">{formatCurrency(data.total_spending)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Education & Household:</span>
+                <span className="font-medium text-slate-900">{data.education} · {data.living_with}</span>
+              </div>
+              <div className="flex justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+                <span>Map Coordinates:</span>
+                <span className="font-mono">
+                  ({data.pc1.toFixed(2)}, {data.pc2.toFixed(2)})
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="text-[11px] text-slate-500 pt-1">
+              Represents the typical spending and demographic center for this customer group.
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function PCAScatterPlot({
   points = [],
   centroids = [],
@@ -25,58 +81,6 @@ export default function PCAScatterPlot({
     }
     return points.filter((p) => p.cluster_id === Number(selectedCluster));
   }, [points, selectedCluster]);
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const isCentroid = data.isCentroid;
-      const segment = SEGMENTS[data.cluster_id];
-
-      return (
-        <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-lg text-xs max-w-xs">
-          <div className="flex items-center gap-2 font-semibold text-slate-900 pb-1.5 border-b border-slate-100">
-            <span
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: segment?.color || '#6366F1' }}
-            />
-            <span className="truncate">
-              {isCentroid ? `Centroid: ${segment?.name}` : `Customer #${data.customer_id}`}
-            </span>
-          </div>
-
-          <div className="mt-2 space-y-1 text-slate-600">
-            <div className="flex justify-between">
-              <span>Segment:</span>
-              <span className="font-medium text-slate-900">{segment?.shortName || `Cluster ${data.cluster_id}`}</span>
-            </div>
-            <div className="flex justify-between font-mono text-[11px]">
-              <span>PC1, PC2:</span>
-              <span className="font-semibold text-slate-900">
-                {data.pc1.toFixed(3)}, {data.pc2.toFixed(3)}
-              </span>
-            </div>
-            {!isCentroid && (
-              <>
-                <div className="flex justify-between">
-                  <span>Income:</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(data.income)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Spending:</span>
-                  <span className="font-medium text-slate-900">{formatCurrency(data.total_spending)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Education / Household:</span>
-                  <span className="font-medium text-slate-900">{data.education} · {data.living_with}</span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Prepare centroids data
   const centroidPoints = useMemo(() => {
@@ -93,19 +97,19 @@ export default function PCAScatterPlot({
     <div className="w-full">
       <div className="h-96 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+          <ScatterChart margin={{ top: 20, right: 20, bottom: 25, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
             <XAxis
               type="number"
               dataKey="pc1"
-              name="Principal Component 1"
+              name="Spending & Income Axis"
               tick={{ fill: '#64748B', fontSize: 11 }}
               tickLine={false}
               axisLine={{ stroke: '#CBD5E1' }}
               label={{
-                value: 'Principal Component 1 (Spending & Income variance)',
+                value: 'Spending & Income Level (Lower Spend ← → Higher Spend)',
                 position: 'insideBottom',
-                offset: -12,
+                offset: -14,
                 fontSize: 11,
                 fill: '#64748B',
               }}
@@ -113,22 +117,22 @@ export default function PCAScatterPlot({
             <YAxis
               type="number"
               dataKey="pc2"
-              name="Principal Component 2"
+              name="Family Structure Axis"
               tick={{ fill: '#64748B', fontSize: 11 }}
               tickLine={false}
               axisLine={{ stroke: '#CBD5E1' }}
               label={{
-                value: 'Principal Component 2 (Family & Household structure)',
+                value: 'Family & Household Dynamics (Solo Living ← → Family with Kids)',
                 angle: -90,
                 position: 'insideLeft',
-                offset: 12,
+                offset: 5,
                 fontSize: 11,
                 fill: '#64748B',
               }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<ScatterTooltip />} />
             
-            {/* Customer PCA points */}
+            {/* Customer points */}
             <Scatter
               name="Customers"
               data={filteredPoints}
@@ -148,7 +152,7 @@ export default function PCAScatterPlot({
 
             {/* Cluster Centroids */}
             <Scatter
-              name="Cluster Centroids"
+              name="Group Centers"
               data={centroidPoints}
               shape="cross"
             >
@@ -165,19 +169,19 @@ export default function PCAScatterPlot({
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between text-xs text-slate-500 px-2">
+      <div className="mt-2 flex flex-wrap items-center justify-between text-xs text-slate-500 px-2 gap-2">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-slate-400 opacity-60" />
-            <span>Customer Point (2,236 total)</span>
+            <span>Individual Customer Profile</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-slate-900 text-sm">✕</span>
-            <span>Cluster Centroid (Mean PCA coordinate)</span>
+            <span>Group Benchmark Center (Typical Customer)</span>
           </div>
         </div>
-        <div className="text-[11px] font-mono text-slate-400">
-          Showing {filteredPoints.length.toLocaleString()} points
+        <div className="text-[11px] text-slate-400">
+          Showing {filteredPoints.length.toLocaleString()} customer profiles
         </div>
       </div>
     </div>

@@ -9,7 +9,9 @@ import {
   Clock,
   ArrowRight,
   Sparkles,
-  Info,
+  ChevronDown,
+  ChevronUp,
+  Database,
 } from 'lucide-react';
 import { api } from '../api/endpoints';
 import Card from '../components/common/Card';
@@ -25,6 +27,7 @@ export default function OverviewDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState('bar'); // 'bar' | 'pie'
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   const fetchOverview = async () => {
     setLoading(true);
@@ -44,7 +47,7 @@ export default function OverviewDashboard() {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner fullHeight message="Fetching customer overview data..." />;
+    return <LoadingSpinner fullHeight message="Loading customer overview metrics..." />;
   }
 
   if (error) {
@@ -74,13 +77,13 @@ export default function OverviewDashboard() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
               <Sparkles className="h-3.5 w-3.5 text-indigo-300" />
-              Unsupervised ML Segmentation
+              Customer Intelligence Platform
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Customer Intelligence & Behavioral Segments
+              Understand Customer Behavior & Buying Habits
             </h2>
             <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-              CustomerLens transforms raw transaction history and demographic profiles into 4 verified behavioral segments derived through PCA dimensionality reduction and Agglomerative Clustering (k=4).
+              CustomerLens organizes 2,236 customer profiles into 4 distinct buying groups based on purchasing habits, income, and household needs — helping you tailor marketing strategies and identify growth opportunities.
             </p>
           </div>
 
@@ -89,14 +92,14 @@ export default function OverviewDashboard() {
               to="/segments"
               className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-slate-900 shadow-sm hover:bg-slate-100 transition-colors"
             >
-              <span>Explore Segments</span>
+              <span>Explore Customer Groups</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/predict"
               className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
             >
-              <span>Predict Customer</span>
+              <span>Find a Customer's Group</span>
               <Sparkles className="h-4 w-4" />
             </Link>
           </div>
@@ -106,31 +109,31 @@ export default function OverviewDashboard() {
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Total Customers"
+          title="Total Customers Analyzed"
           value={formatNumber(total_customers)}
-          subtitle="4 extreme outliers removed during cleaning"
+          subtitle="Active customer accounts"
           icon={Users}
-          badge="Cleaned Dataset"
+          badge="Customer Base"
           badgeType="default"
         />
         <MetricCard
-          title="Discovered Segments"
+          title="Customer Groups"
           value={total_segments}
-          subtitle="Agglomerative (Ward linkage, k=4)"
+          subtitle="Distinct buying behaviors identified"
           icon={Layers}
-          badge="Optimal Clusters"
+          badge="Core Groups"
           badgeType="primary"
         />
         <MetricCard
           title="Average Household Income"
           value={formatCurrency(overall_averages?.income)}
-          subtitle="Median imputed across 24 missing records"
+          subtitle="Across all customer households"
           icon={DollarSign}
         />
         <MetricCard
           title="Average Total Spending"
           value={formatCurrency(overall_averages?.total_spending)}
-          subtitle="Across 6 product categories (wines, meat, etc.)"
+          subtitle="Lifetime spend across all products"
           icon={ShoppingCart}
         />
       </div>
@@ -143,6 +146,7 @@ export default function OverviewDashboard() {
             <p className="text-xl font-bold text-slate-900 mt-1">
               {overall_averages?.age?.toFixed(1)} <span className="text-xs font-normal text-slate-500">years</span>
             </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Typical age range: 45–65</p>
           </div>
           <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
             <Calendar className="h-5 w-5" />
@@ -151,10 +155,11 @@ export default function OverviewDashboard() {
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500">Average Recency</p>
+            <p className="text-xs font-medium text-slate-500">Purchase Recency</p>
             <p className="text-xl font-bold text-slate-900 mt-1">
-              {overall_averages?.recency?.toFixed(1)} <span className="text-xs font-normal text-slate-500">days since purchase</span>
+              {overall_averages?.recency?.toFixed(1)} <span className="text-xs font-normal text-slate-500">days</span>
             </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Average time since last order</p>
           </div>
           <div className="h-10 w-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
             <Clock className="h-5 w-5" />
@@ -163,10 +168,11 @@ export default function OverviewDashboard() {
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500">Children / Household</p>
+            <p className="text-xs font-medium text-slate-500">Children in Household</p>
             <p className="text-xl font-bold text-slate-900 mt-1">
-              {overall_averages?.total_children?.toFixed(2)} <span className="text-xs font-normal text-slate-500">kids + teens</span>
+              {overall_averages?.total_children?.toFixed(2)} <span className="text-xs font-normal text-slate-500">per home</span>
             </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Kids and teenagers combined</p>
           </div>
           <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
             <Users className="h-5 w-5" />
@@ -179,8 +185,8 @@ export default function OverviewDashboard() {
         {/* Left: Segment Distribution Chart */}
         <div className="lg:col-span-7">
           <Card
-            title="Cluster Distribution"
-            subtitle="Customer count and proportion across the 4 Agglomerative clusters"
+            title="Customer Distribution by Group"
+            subtitle="Customer volume and proportion across the 4 key customer segments"
             actions={
               <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
                 <button
@@ -218,8 +224,8 @@ export default function OverviewDashboard() {
         {/* Right: Segment Quick Profiles List */}
         <div className="lg:col-span-5">
           <Card
-            title="Segment Profiles Summary"
-            subtitle="Identified behavioral segments and customer volumes"
+            title="Customer Group Summaries"
+            subtitle="Overview of each customer group's profile and size"
           >
             <div className="space-y-3">
               {cluster_distribution.map((cluster) => {
@@ -251,56 +257,85 @@ export default function OverviewDashboard() {
 
       {/* Key Analytical Findings Section */}
       <Card
-        title="Key Analytical Findings"
-        subtitle="Empirical conclusions derived from PCA coordinates and feature distributions"
+        title="Executive Takeaways & Marketing Opportunities"
+        subtitle="Practical conclusions drawn from customer spending and demographic data"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed text-slate-600">
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-2 font-semibold text-slate-900 mb-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>Plurality in Budget Households (Cluster 0)</span>
+              <span>Largest Audience: Budget Family Households (40.5%)</span>
             </div>
             <p>
-              Cluster 0 represents 40.47% (905 customers) of the platform. They are characterized by moderate incomes, partner households, and strong price sensitivity with consistent deal shopping.
+              905 customers represent the volume backbone of the customer base. They have children at home and prioritize budget-friendly staples, value bundles, and seasonal discounts.
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-2 font-semibold text-slate-900 mb-1.5">
               <span className="h-2 w-2 rounded-full bg-violet-500" />
-              <span>High-LTV Spend Concentrated in Cluster 1</span>
+              <span>Top Revenue Drivers: Affluent Partner Shoppers (23.9%)</span>
             </div>
             <p>
-              Cluster 1 (23.88%, 534 customers) displays the highest average spending, driven by high wine and meat purchases, coupled with low deal seeking and predominantly adult households.
+              534 high-income customers drive the highest revenue per account ($1,281 avg. spend), purchasing heavily in premium wine and gourmet meats. Best candidates for VIP loyalty programs and premium pairings.
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-2 font-semibold text-slate-900 mb-1.5">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <span>Solo Parents Face Budget Constraints (Cluster 2)</span>
+              <span>Price-Sensitive: Budget Solo Parents (19.9%)</span>
             </div>
             <p>
-              Cluster 2 (19.86%, 444 customers) consists of single parents with smaller incomes. They make heavy use of web visits and promotions, spending less on premium luxury catalog categories.
+              444 single-parent households managing careful family budgets ($129 avg. spend). Frequent web visitors who look for clear promotions, digital coupons, and everyday essentials.
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-2 font-semibold text-slate-900 mb-1.5">
               <span className="h-2 w-2 rounded-full bg-rose-500" />
-              <span>Highest Campaign Responsiveness in Cluster 3</span>
+              <span>Most Receptive: Affluent Independent Spenders (15.8%)</span>
             </div>
             <p>
-              Cluster 3 (15.79%, 353 customers) is the most receptive cohort to marketing campaigns, with high engagement rates and solid discretionary purchasing power among solo individuals.
+              353 single professionals with high purchasing power ($1,299 avg. spend). They exhibit the highest campaign response rate (29.2%) and respond enthusiastically to new product launches.
             </p>
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <Info className="h-4 w-4 text-slate-400 shrink-0" />
-          <span>
-            Pipeline Note: 22 raw attributes were transformed into 18 standardized features, reduced to 3 PCA dimensions (capturing 44.95% cumulative variance) prior to Agglomerative Clustering.
-          </span>
+        {/* Collapsible Layer for Technical Background */}
+        <div className="mt-5 pt-4 border-t border-slate-200/80">
+          <button
+            type="button"
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            className="flex items-center justify-between w-full text-xs font-semibold text-slate-600 hover:text-slate-900 py-1 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-indigo-600" />
+              <span>Data Methodology & Technical Specifications (For Technical Reviewers)</span>
+            </div>
+            {showTechnicalDetails ? (
+              <ChevronUp className="h-4 w-4 text-slate-400" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            )}
+          </button>
+
+          {showTechnicalDetails && (
+            <div className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2 leading-relaxed">
+              <p>
+                <span className="font-semibold text-slate-800">Dataset & Transformation:</span> 22 original transaction and demographic variables were preprocessed into 18 standardized features (StandardScaler) with median imputation for missing income values.
+              </p>
+              <p>
+                <span className="font-semibold text-slate-800">Clustering Methodology:</span> Customers were partitioned using Ward-linkage Agglomerative Clustering (k=4), which achieved a silhouette score of 0.3793, outperforming K-Means (0.3581).
+              </p>
+              <p>
+                <span className="font-semibold text-slate-800">Dimensionality Reduction:</span> PCA projects the 18 standardized features into 3 orthogonal principal components explaining 44.95% cumulative variance.
+              </p>
+              <p>
+                <span className="font-semibold text-slate-800">Operational Matching:</span> A NearestCentroid classifier in 3D PCA space acts as an operational surrogate for real-time customer matching (96.29% in-sample agreement, ARI = 0.8947).
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </div>

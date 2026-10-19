@@ -6,28 +6,28 @@ import { api } from '../../api/endpoints';
 
 const PAGE_METADATA = {
   '/': {
-    title: 'Overview Dashboard',
-    subtitle: 'High-level customer distribution, key cohort averages, and ML segmentation summary.',
+    title: 'Customer Overview',
+    subtitle: 'High-level customer distribution, spending benchmarks, and audience summaries.',
   },
   '/segments': {
-    title: 'Segment Explorer',
-    subtitle: 'Interactive 3D PCA projection (PC1 vs PC2), cluster centroids, and feature comparisons.',
+    title: 'Customer Segments',
+    subtitle: 'Visual behavioral map, group profiles, and demographic comparisons across customer cohorts.',
   },
   '/customers': {
-    title: 'Customer Explorer',
-    subtitle: 'Search, filter, and inspect individual customer records with 18-feature cluster benchmarks.',
+    title: 'Customer Directory',
+    subtitle: 'Search, filter, and inspect individual customer records alongside group benchmarks.',
   },
   '/predict': {
-    title: 'Predict Customer Segment',
-    subtitle: 'Real-time inference using NearestCentroid in 3D PCA space with historical data constraints.',
+    title: 'Customer Group Finder',
+    subtitle: 'Estimate which customer group a profile most resembles based on spending and lifestyle habits.',
   },
   '/business-insights': {
     title: 'Business Insights',
-    subtitle: 'Segment-by-segment behavioral findings and actionable marketing retention hypotheses.',
+    subtitle: 'Actionable marketing strategies, channel preferences, and spending profiles by customer group.',
   },
   '/model-insights': {
-    title: 'Model Insights',
-    subtitle: 'Machine learning architecture, PCA variance, silhouette scores, and held-out cross-validation.',
+    title: 'How Customer Lens Works',
+    subtitle: 'Understand how customer data is processed, grouped, and matched to support business decisions.',
   },
 };
 
