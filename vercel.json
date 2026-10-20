@@ -4,9 +4,7 @@
     "backend": {
       "root": ".",
       "framework": "fastapi",
-      "entrypoint": "api/index.py",
-      "includeFiles": "backend/**,datasets/**,model/**",
-      "maxDuration": 30
+      "entrypoint": "api/index.py"
     },
     "frontend": {
       "root": "frontend",

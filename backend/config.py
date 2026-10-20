@@ -9,6 +9,13 @@ from pathlib import Path
 # ── Workspace root (one level up from backend/) ───────────────────────────────
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 
+# Robust fallback: ensure datasets directory exists regardless of runtime execution context
+if not (WORKSPACE_ROOT / "datasets" / "customers_dataset.csv").exists():
+    for candidate in [Path.cwd(), Path(__file__).resolve().parent, Path("/var/task")]:
+        if (candidate / "datasets" / "customers_dataset.csv").exists():
+            WORKSPACE_ROOT = candidate
+            break
+
 # ── Dataset paths ─────────────────────────────────────────────────────────────
 DATASETS_DIR            = WORKSPACE_ROOT / "datasets"
 RAW_DATASET_PATH        = DATASETS_DIR / "customers_dataset.csv"
