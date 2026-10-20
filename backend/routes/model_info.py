@@ -60,8 +60,8 @@ def get_model_info():
         silhouette_score=0.3793,
         elbow_optimal_k=4,
         feature_engineering=[
-            "Age = observation_date.year − Year_Birth (dynamically anchored to observation year; adult range 18–100)",
-            "Customer_Tenure_Days = (observation_date − Dt_Customer).days (historical cohort uses 2014-06-29 snapshot; modern customers use live observation date)",
+            "Age = 2026 - Year_Birth (fixed reference year matching StandardScaler parameters: mean 57.10, std 11.70)",
+            "Customer_Tenure_Days = (2014-06-29 - Dt_Customer).days (fixed historical cohort snapshot date: mean 353.77, std 202.14)",
             "Total_Spending = sum of MntWines, MntFruits, MntMeatProducts, MntFishProducts, MntSweetProducts, MntGoldProds",
             "Total_Children = Kidhome + Teenhome",
         ],

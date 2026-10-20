@@ -149,7 +149,7 @@ class PredictRequest(BaseModel):
     # ── Demographics ──────────────────────────────────────────────────────────
     year_birth: int = Field(
         ...,
-        description="Customer year of birth. Must reflect an adult customer (18–100 years old).",
+        description="Customer year of birth. Must reflect an adult customer (18–100 years old at reference baseline 2026, e.g. 1926–2008).",
     )
     education: str = Field(
         ...,
@@ -179,8 +179,8 @@ class PredictRequest(BaseModel):
     dt_customer: str = Field(
         ...,
         description=(
-            "Customer enrolment date in YYYY-MM-DD or DD-MM-YYYY format.  "
-            "Must be on or before the current observation date."
+            "Customer enrolment date in YYYY-MM-DD or DD-MM-YYYY format. "
+            "Must be on or before the historical campaign snapshot date (2014-06-29)."
         ),
     )
 
@@ -210,15 +210,15 @@ class PredictRequest(BaseModel):
     @field_validator("year_birth")
     @classmethod
     def validate_year_birth(cls, v: int) -> int:
-        current_year = pd.Timestamp.now().year
-        age = current_year - v
+        ref_year = 2026
+        age = ref_year - v
         if age < 18:
             raise ValueError(
-                f"Customer must be at least 18 years of age (year_birth {v} implies age {age} in {current_year})."
+                f"Customer must be at least 18 years of age at reference baseline (year_birth {v} implies age {age} in {ref_year})."
             )
         if age > 100:
             raise ValueError(
-                f"Customer year_birth {v} implies age {age} in {current_year}, exceeding the valid human lifespan range (18–100 years)."
+                f"Customer year_birth {v} implies age {age} in {ref_year}, exceeding the valid human lifespan range (18–100 years)."
             )
         return v
 
@@ -248,11 +248,13 @@ class PredictRequest(BaseModel):
             except Exception:
                 raise ValueError(f"dt_customer '{self.dt_customer}' is not a valid date format.")
         
-        now = pd.Timestamp.now().normalize()
-        if dt > now:
+        snapshot_dt = pd.Timestamp("2014-06-29")
+        if dt > snapshot_dt:
             raise ValueError(
-                f"dt_customer '{self.dt_customer}' cannot be in the future (current observation date: "
-                f"{now.strftime('%Y-%m-%d')}). Enrolment date must be on or before today."
+                f"Customer enrolment date '{self.dt_customer}' cannot be after the historical cohort snapshot date "
+                f"({snapshot_dt.strftime('%Y-%m-%d')}). The clustering model and feature scaler are calibrated on a "
+                f"2012–2014 acquisition cohort; enrolment dates must fall within this historical observation window "
+                f"(e.g., 2012-07-30 to 2014-06-29)."
             )
         return self
 

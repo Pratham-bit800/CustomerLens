@@ -41,19 +41,18 @@ CATEGORICAL_COLS = ["Education", "Living_With"]
 
 # ── Feature-engineering & Snapshot Policy ─────────────────────────────────────
 #
-# Historical Training Anchors:
+# Historical Training Anchors (Option A: Strict Historical Baseline Preservation):
 # The raw dataset represents a customer campaign cohort ending on 2014-06-29.
 TRAINING_SNAPSHOT_DATE = "2014-06-29"
 TRAINING_SNAPSHOT_YEAR = 2014
+TENURE_REFERENCE_DATE  = "2014-06-29"  # Fixed cohort snapshot anchor
 
 # The training notebook calculated Age = 2026 - Year_Birth, anchoring the
 # adult customer distribution (mean 57.10, std 11.70, range 30–86).
-# Serving dynamically calculates Age = observation_date.year - Year_Birth
-# and Tenure = (observation_date - Dt_Customer).days, eliminating hardcoded
-# calendar limits while maintaining exact StandardScaler distribution alignment.
+# Serving strictly preserves this fixed reference year (2026) to prevent
+# temporal drift against the pre-fitted StandardScaler artifact.
 AGE_TRAINING_BASE_YEAR = 2026
-AGE_REFERENCE_YEAR     = 2026  # Alias for backward compatibility
-TENURE_REFERENCE_DATE  = "2014-06-29"  # Training snapshot anchor
+AGE_REFERENCE_YEAR     = 2026  # Fixed reference year matching scaler.joblib
 
 # Statistical bounds of the historical training dataset (for extrapolation detection):
 TRAINING_DISTRIBUTION_BOUNDS = {

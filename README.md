@@ -346,8 +346,8 @@ When the application is running:
 
 ## 15. Known Limitations & Future Roadmap
 
-1. **Historical Distribution Coverage & Extrapolation:**
-   * Models were trained on a historical 2012–2014 cohort. While the serving pipeline dynamically accepts modern dates and calculates true elapsed tenure, predictions for customers with tenures > 699 days or incomes > $162,397 represent extrapolation into low-density regions of the 3D PCA embedding space, flagged transparently via API warnings.
+1. **Historical Cohort Observation Window & Extrapolation:**
+   * The segmentation model and standard scaler were trained and calibrated on a 2-year customer acquisition cohort (2012–2014) with a fixed observation snapshot date of June 29, 2014. To preserve mathematical consistency with the pre-fitted `StandardScaler` and avoid uncalibrated $z$-score discontinuities, customer enrolment dates are strictly anchored to this historical cohort window ($\le$ 2014-06-29). Customer profiles with incomes $> \$162,397$ or tenures $> 699$ days represent statistical extrapolation and are flagged transparently via non-fatal warnings.
 2. **Information Loss in PCA:**
    * 3 principal components capture 44.95% of total variance across the 18 standardized features. 55.05% of residual variance is compressed away to facilitate 3D Euclidean centroid assignment.
 3. **Surrogate Decision Boundary Disagreement:**

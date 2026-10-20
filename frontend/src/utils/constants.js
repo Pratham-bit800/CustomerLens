@@ -90,7 +90,7 @@ export const FEATURE_LABELS = {
 export const PRESET_PROFILES = [
   {
     name: 'Affluent Partner Spender',
-    description: 'High income, no kids at home, married, high wine/meat spend (modern profile)',
+    description: 'High income, no kids at home, married, high wine/meat spend (Cluster 1 archetype)',
     data: {
       year_birth: 1980,
       education: 'PhD',
@@ -98,7 +98,7 @@ export const PRESET_PROFILES = [
       income: 76500,
       kidhome: 0,
       teenhome: 0,
-      dt_customer: '2025-05-12',
+      dt_customer: '2013-05-12',
       recency: 38,
       mnt_wines: 640,
       mnt_fruits: 45,
@@ -117,7 +117,7 @@ export const PRESET_PROFILES = [
   },
   {
     name: 'Budget Partner Household',
-    description: 'Moderate income, children at home, price-sensitive purchases (modern profile)',
+    description: 'Moderate income, children at home, price-sensitive purchases (Cluster 0 archetype)',
     data: {
       year_birth: 1988,
       education: 'Graduation',
@@ -125,7 +125,7 @@ export const PRESET_PROFILES = [
       income: 38000,
       kidhome: 1,
       teenhome: 1,
-      dt_customer: '2025-08-20',
+      dt_customer: '2013-08-20',
       recency: 55,
       mnt_wines: 60,
       mnt_fruits: 8,
@@ -144,7 +144,7 @@ export const PRESET_PROFILES = [
   },
   {
     name: 'Constrained Solo Parent',
-    description: 'Modest income, single parent, high deal sensitivity (modern profile)',
+    description: 'Modest income, single parent, high deal sensitivity (Cluster 2 archetype)',
     data: {
       year_birth: 1992,
       education: 'Graduation',
@@ -152,7 +152,7 @@ export const PRESET_PROFILES = [
       income: 29500,
       kidhome: 1,
       teenhome: 0,
-      dt_customer: '2025-02-14',
+      dt_customer: '2014-02-14',
       recency: 42,
       mnt_wines: 25,
       mnt_fruits: 4,
@@ -171,7 +171,7 @@ export const PRESET_PROFILES = [
   },
   {
     name: 'High-Response Solo Spender',
-    description: 'Living alone, high engagement with campaign responses (modern profile)',
+    description: 'Living alone, high engagement with campaign responses (Cluster 3 archetype)',
     data: {
       year_birth: 1984,
       education: 'Master',
@@ -179,7 +179,7 @@ export const PRESET_PROFILES = [
       income: 68000,
       kidhome: 0,
       teenhome: 0,
-      dt_customer: '2025-06-05',
+      dt_customer: '2013-06-05',
       recency: 22,
       mnt_wines: 480,
       mnt_fruits: 35,

@@ -23,7 +23,7 @@ const INITIAL_FORM = {
   income: 52000,
   kidhome: 1,
   teenhome: 0,
-  dt_customer: '2025-05-15',
+  dt_customer: '2013-05-15',
   recency: 45,
   mnt_wines: 250,
   mnt_fruits: 20,
@@ -40,8 +40,10 @@ const INITIAL_FORM = {
   response: 0,
 };
 
-const CURRENT_DATE_STRING = new Date().toISOString().split('T')[0];
-const MAX_BIRTH_YEAR = new Date().getFullYear() - 18;
+const COHORT_SNAPSHOT_DATE = '2014-06-29';
+const COHORT_MIN_DATE = '2012-01-01';
+const MAX_BIRTH_YEAR = 2008; // Age >= 18 at reference baseline 2026
+const MIN_BIRTH_YEAR = 1926; // Age <= 100 at reference baseline 2026
 
 export default function PredictSegment() {
   const [form, setForm] = useState(INITIAL_FORM);
@@ -135,7 +137,7 @@ export default function PredictSegment() {
               <span className="font-semibold">Assignment Architecture:</span> Inputs are standardized with our pre-trained scaler, projected into 3D PCA space, and matched against cluster centroids using a NearestCentroid surrogate (achieving 96.29% agreement with the reference Agglomerative clustering).
             </p>
             <p>
-              <span className="font-semibold">Extrapolation Handling:</span> Both modern and historical dates are supported. Incomes &gt; $162,397 or tenures &gt; 699 days represent low-density extrapolation regions and are transparently flagged with non-fatal warnings.
+              <span className="font-semibold">Historical Baseline Preservation:</span> Features are strictly anchored to the historical training campaign cohort (snapshot date: June 29, 2014; age reference: 2026). Enrolment dates must fall on or before 2014-06-29 to maintain mathematical consistency with the trained StandardScaler artifact. Incomes &gt; $162,397 represent extrapolation regions and are transparently flagged.
             </p>
           </div>
         )}
@@ -199,7 +201,7 @@ export default function PredictSegment() {
                     </label>
                     <input
                       type="number"
-                      min={1925}
+                      min={MIN_BIRTH_YEAR}
                       max={MAX_BIRTH_YEAR}
                       required
                       value={form.year_birth}
@@ -301,16 +303,20 @@ export default function PredictSegment() {
 
                   <div>
                     <label className="block text-slate-700 font-medium mb-1">
-                      Enrolment Date (≤ Today)
+                      Enrolment Date (2012–2014 Cohort)
                     </label>
                     <input
                       type="date"
-                      max={CURRENT_DATE_STRING}
+                      min={COHORT_MIN_DATE}
+                      max={COHORT_SNAPSHOT_DATE}
                       required
                       value={form.dt_customer}
                       onChange={(e) => handleChange('dt_customer', e.target.value)}
                       className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
                     />
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Campaign cohort cutoff: ≤ 2014-06-29
+                    </span>
                   </div>
                 </div>
 

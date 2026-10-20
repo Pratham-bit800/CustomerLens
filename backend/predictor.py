@@ -46,39 +46,30 @@ def _engineer_features(req: PredictRequest) -> Tuple[Dict[str, Any], str, str, L
     """
     Convert a PredictRequest into raw features and transformations.
     
-    Observation Policy:
-      - Age is dynamically calculated as (observation_date.year - Year_Birth),
-        landing seamlessly into the adult customer distribution (mean 57.10, std 11.70).
-      - Customer tenure is calculated as (observation_date - Dt_Customer).days.
-        * For historical cohort records (enrolled <= 2014-06-29), observation_date is
-          the cohort snapshot date (2014-06-29).
-        * For modern customers (enrolled > 2014-06-29), observation_date is today's date.
+    Feature Engineering Baseline (Option A: Strict Historical Baseline Preservation):
+      - Age is calculated as (AGE_REFERENCE_YEAR - req.year_birth), strictly matching
+        the training notebook formula (2026 - Year_Birth) and fitted StandardScaler parameters.
+      - Customer tenure is calculated as (TRAINING_SNAPSHOT_DATE - Dt_Customer).days,
+        anchored to the fixed cohort snapshot date (2014-06-29).
       - Inputs outside historical dataset limits (income > $162,397, tenure > 699 days,
-        age > 86) are accepted and predicted, but flagged with transparent extrapolation warnings.
+        age > 86) are flagged with transparent extrapolation warnings.
     
     Returns:
         numeric_row, education_simple, living_with, warnings
     """
     warnings: List[str] = []
-    now = pd.Timestamp.now().normalize()
-    current_year = now.year
 
-    # ── Age (dynamically anchored to observation year) ─────────────────────────
-    age = current_year - req.year_birth
+    # ── Age (anchored to fixed training reference year 2026) ───────────────────
+    age = AGE_REFERENCE_YEAR - req.year_birth
 
-    # ── Customer tenure (dynamically anchored to observation date) ────────────
+    # ── Customer tenure (anchored to historical cohort snapshot 2014-06-29) ───
     try:
         dt = pd.to_datetime(req.dt_customer, dayfirst=False)
     except Exception:
         dt = pd.to_datetime(req.dt_customer, dayfirst=True)
 
     snapshot_dt = pd.Timestamp(TRAINING_SNAPSHOT_DATE)
-    if dt <= snapshot_dt:
-        obs_date = snapshot_dt
-    else:
-        obs_date = now
-
-    tenure_days = int((obs_date - dt).days)
+    tenure_days = int((snapshot_dt - dt).days)
 
     # ── Out-of-distribution extrapolation checks ──────────────────────────────
     if float(req.income) > TRAINING_DISTRIBUTION_BOUNDS["max_income"]:
